@@ -560,10 +560,9 @@ func (c *BigQueryConnector) mergeTablesInThisBatch(
 		stmtNum := 0
 		err = shared.ArrayIterChunks(unchangedToastColumns, batchSize, func(chunk []string) error {
 			stmtNum += 1
-			mergeStmt := mergeGen.generateMergeStmt(chunk)
 			c.logger.Info(fmt.Sprintf("running merge statement %d for table %s..",
 				stmtNum, tableName))
-
+			mergeStmt := mergeGen.generateMergeStmt(chunk)
 			q := c.client.Query(mergeStmt)
 			q.DefaultProjectID = c.projectID
 			q.DefaultDatasetID = dstDatasetTable.dataset
