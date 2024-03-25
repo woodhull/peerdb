@@ -537,6 +537,7 @@ func (c *BigQueryConnector) mergeTablesInThisBatch(
 	}
 
 	for _, tableName := range tableNames {
+		c.logger.Info("Preparing merge for table " + tableName)
 		unchangedToastColumns := tableNametoUnchangedToastCols[tableName]
 		dstDatasetTable, _ := c.convertToDatasetTable(tableName)
 		mergeGen := &mergeStmtGenerator{
