@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"math"
 
 	"github.com/google/uuid"
@@ -80,6 +81,8 @@ func (r RecordItems) Len() int {
 
 func (r RecordItems) toMap(opts ToJSONOptions) (map[string]interface{}, error) {
 	jsonStruct := make(map[string]interface{}, len(r.ColToVal))
+	// track the total size of json, string and array in the row
+	bigColumnTotalSize := 0
 	for col, qv := range r.ColToVal {
 		if qv == nil {
 			jsonStruct[col] = nil
@@ -123,6 +126,7 @@ func (r RecordItems) toMap(opts ToJSONOptions) (map[string]interface{}, error) {
 			} else {
 				jsonStruct[col] = strVal
 			}
+			bigColumnTotalSize += len(strVal)
 		case qvalue.QValueJSON:
 			if len(v.Val) > 15*1024*1024 {
 				jsonStruct[col] = ""
@@ -139,6 +143,7 @@ func (r RecordItems) toMap(opts ToJSONOptions) (map[string]interface{}, error) {
 			} else {
 				jsonStruct[col] = v.Val
 			}
+			bigColumnTotalSize += len(v.Val)
 		case qvalue.QValueHStore:
 			hstoreVal := v.Val
 
@@ -156,6 +161,7 @@ func (r RecordItems) toMap(opts ToJSONOptions) (map[string]interface{}, error) {
 					jsonStruct[col] = jsonVal
 				}
 			}
+			bigColumnTotalSize += len(hstoreVal)
 
 		case qvalue.QValueTimestamp:
 			jsonStruct[col] = v.Val.Format("2006-01-02 15:04:05.999999")
@@ -210,10 +216,21 @@ func (r RecordItems) toMap(opts ToJSONOptions) (map[string]interface{}, error) {
 				}
 			}
 			jsonStruct[col] = nullableFloatArr
-
+		case qvalue.QValueArrayString:
+			strArr := v.Val
+			totalArraySize := 0
+			for _, val := range strArr {
+				totalArraySize += len(val)
+			}
+			bigColumnTotalSize += totalArraySize
+			jsonStruct[col] = v.Value()
 		default:
 			jsonStruct[col] = v.Value()
 		}
+	}
+
+	if bigColumnTotalSize > 15*1024*1024 {
+		slog.Warn("Logging large JSON (> 15MB)", slog.Any("rowData", jsonStruct))
 	}
 
 	return jsonStruct, nil
