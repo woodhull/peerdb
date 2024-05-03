@@ -291,7 +291,7 @@ func QValueToAvro(value QValue, field *QField, targetDWH protos.DBType, logger l
 	case QValueString, QValueCIDR, QValueINET, QValueMacaddr, QValueInterval:
 		if c.TargetDWH == protos.DBType_SNOWFLAKE && v.Value() != nil &&
 			(len(v.Value().(string)) > 15*1024*1024) {
-			slog.Warn("Clearing TEXT value > 15MB for Snowflake!")
+			slog.Warn("Clearing TEXT value > 15MB for Snowflake!", slog.String("rowData", v.Value().(string)))
 			slog.Warn("Check this issue for details: https://github.com/PeerDB-io/peerdb/issues/309")
 			return c.processNullableUnion("string", "")
 		}
