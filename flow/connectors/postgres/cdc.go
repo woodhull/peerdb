@@ -335,6 +335,7 @@ func PullCdcRecords[Items model.Items](
 	addRecordWithKey := func(key model.TableWithPkey, rec model.Record[Items]) error {
 		err := cdcRecordsStorage.Set(logger, key, rec)
 		if err != nil {
+			p.logger.Error("error adding record to storage", slog.Any("error", err))
 			return err
 		}
 		records.AddRecord(rec)

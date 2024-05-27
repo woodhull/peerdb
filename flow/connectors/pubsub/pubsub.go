@@ -316,6 +316,7 @@ Loop:
 				for i := range args {
 					msg, err := lvalueToPubSubMessage(ls, ls.Get(i-args))
 					if err != nil {
+						c.logger.Error("[pubsub] error creating message", slog.Any("error", err))
 						queueErr(err)
 						return poolResult{}
 					}

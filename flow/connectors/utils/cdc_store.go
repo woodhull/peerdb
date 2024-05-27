@@ -161,18 +161,24 @@ func (c *cdcStore[T]) Set(logger log.Logger, key model.TableWithPkey, rec model.
 					slog.String(string(shared.FlowNameKey), c.flowJobName))
 				err := c.initPebbleDB()
 				if err != nil {
+					logger.Error("failed to initialize Pebble database",
+						slog.Any("error", err))
 					return err
 				}
 			}
 
 			encodedKey, err := encVal(key)
 			if err != nil {
+				logger.Error("[set] failed to encode key",
+					slog.Any("error", err))
 				return err
 			}
 			// necessary to point pointer to interface so the interface is exposed
 			// instead of the underlying type
 			encodedRec, err := encVal(&rec)
 			if err != nil {
+				logger.Error("[set] failed to encode record",
+					slog.Any("error", err))
 				return err
 			}
 			// we're using Pebble as a cache, no need for durability here.
@@ -180,6 +186,8 @@ func (c *cdcStore[T]) Set(logger log.Logger, key model.TableWithPkey, rec model.
 				Sync: false,
 			})
 			if err != nil {
+				logger.Error("[set] failed to store value in Pebble",
+					slog.Any("error", err))
 				return fmt.Errorf("unable to store value in Pebble: %w", err)
 			}
 		}
