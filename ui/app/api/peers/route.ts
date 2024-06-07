@@ -112,9 +112,7 @@ export async function POST(request: Request) {
           method: 'POST',
           body: JSON.stringify(validateReq),
         }
-      ).then((res) => {
-        return res.json();
-      });
+      ).then((res) => res.json());
       let response: UValidatePeerResponse = {
         valid:
           validatePeerStatusFromJSON(validateStatus.status) ===
@@ -134,9 +132,7 @@ export async function POST(request: Request) {
           method: 'POST',
           body: JSON.stringify(req),
         }
-      ).then((res) => {
-        return res.json();
-      });
+      ).then((res) => res.json());
       let response: UCreatePeerResponse = {
         created:
           createPeerStatusFromJSON(createStatus.status) ===

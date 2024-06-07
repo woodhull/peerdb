@@ -7,6 +7,7 @@ tmp/
 private/
 nexus/server/tests/assets/*.json
 nexus/server/tests/results/actual/
+flow/peer-flow
 
 go.work
 go.work.sum
