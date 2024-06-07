@@ -6,7 +6,7 @@ export PEERDB_CATALOG_PORT=5432
 export PEERDB_CATALOG_USER=postgres
 export PEERDB_CATALOG_PASSWORD=postgres
 export PEERDB_CATALOG_DATABASE=postgres
-export PEERDB_FLOW_SERVER_HTTP=http://localhost:8110
+export PEERDB_FLOW_SERVER_HTTP=http://localhost:8111
 export NEXTAUTH_SECRET=test
 export DATABASE_URL=postgres://postgres:postgres@localhost/postgres
 

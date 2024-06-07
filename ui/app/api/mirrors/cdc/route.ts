@@ -13,26 +13,20 @@ export async function POST(request: Request) {
   const req: CreateCDCFlowRequest = {
     connectionConfigs: config,
   };
-  try {
-    const createStatus: CreateCDCFlowResponse = await fetch(
-      `${flowServiceAddr}/v1/flows/cdc/create`,
-      {
-        method: 'POST',
-        body: JSON.stringify(req),
-      }
-    ).then((res) => {
-      return res.json();
-    });
-
-    if (!createStatus.workflowId) {
-      return new Response(JSON.stringify(createStatus));
+  const createStatus: CreateCDCFlowResponse = await fetch(
+    `${flowServiceAddr}/v1/flows/cdc/create`,
+    {
+      method: 'POST',
+      body: JSON.stringify(req),
     }
-    let response: UCreateMirrorResponse = {
-      created: true,
-    };
+  ).then((res) => res.json());
 
-    return new Response(JSON.stringify(response));
-  } catch (e) {
-    console.log(e);
+  if (!createStatus.workflowId) {
+    return new Response(JSON.stringify(createStatus));
   }
+  let response: UCreateMirrorResponse = {
+    created: true,
+  };
+
+  return new Response(JSON.stringify(response));
 }

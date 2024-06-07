@@ -14,22 +14,16 @@ export async function POST(request: Request) {
     qrepConfig: config,
     createCatalogEntry: true,
   };
-  try {
-    const createStatus: CreateQRepFlowResponse = await fetch(
-      `${flowServiceAddr}/v1/flows/qrep/create`,
-      {
-        method: 'POST',
-        body: JSON.stringify(req),
-      }
-    ).then((res) => {
-      return res.json();
-    });
-    let response: UCreateMirrorResponse = {
-      created: !!createStatus.workflowId,
-    };
+  const createStatus: CreateQRepFlowResponse = await fetch(
+    `${flowServiceAddr}/v1/flows/qrep/create`,
+    {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }
+  ).then((res) => res.json());
+  let response: UCreateMirrorResponse = {
+    created: !!createStatus.workflowId,
+  };
 
-    return new Response(JSON.stringify(response));
-  } catch (e) {
-    console.log(e);
-  }
+  return new Response(JSON.stringify(response));
 }

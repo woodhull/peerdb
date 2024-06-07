@@ -105,44 +105,36 @@ export async function POST(request: Request) {
   const peer = constructPeer(name, type, config);
   if (mode === 'validate') {
     const validateReq: ValidatePeerRequest = { peer };
-    try {
-      const validateStatus: ValidatePeerResponse = await fetch(
-        `${flowServiceAddr}/v1/peers/validate`,
-        {
-          method: 'POST',
-          body: JSON.stringify(validateReq),
-        }
-      ).then((res) => res.json());
-      let response: UValidatePeerResponse = {
-        valid:
-          validatePeerStatusFromJSON(validateStatus.status) ===
-          ValidatePeerStatus.VALID,
-        message: validateStatus.message,
-      };
-      return new Response(JSON.stringify(response));
-    } catch (error) {
-      console.error('Error validating peer:', error);
-    }
+    const validateStatus: ValidatePeerResponse = await fetch(
+      `${flowServiceAddr}/v1/peers/validate`,
+      {
+        method: 'POST',
+        body: JSON.stringify(validateReq),
+      }
+    ).then((res) => res.json());
+    let response: UValidatePeerResponse = {
+      valid:
+        validatePeerStatusFromJSON(validateStatus.status) ===
+        ValidatePeerStatus.VALID,
+      message: validateStatus.message,
+    };
+    return new Response(JSON.stringify(response));
   } else if (mode === 'create') {
     const req: CreatePeerRequest = { peer };
-    try {
-      const createStatus: CreatePeerResponse = await fetch(
-        `${flowServiceAddr}/v1/peers/create`,
-        {
-          method: 'POST',
-          body: JSON.stringify(req),
-        }
-      ).then((res) => res.json());
-      let response: UCreatePeerResponse = {
-        created:
-          createPeerStatusFromJSON(createStatus.status) ===
-          CreatePeerStatus.CREATED,
-        message: createStatus.message,
-      };
-      return new Response(JSON.stringify(response));
-    } catch (error) {
-      console.error('Error creating peer:', error);
-    }
+    const createStatus: CreatePeerResponse = await fetch(
+      `${flowServiceAddr}/v1/peers/create`,
+      {
+        method: 'POST',
+        body: JSON.stringify(req),
+      }
+    ).then((res) => res.json());
+    let response: UCreatePeerResponse = {
+      created:
+        createPeerStatusFromJSON(createStatus.status) ===
+        CreatePeerStatus.CREATED,
+      message: createStatus.message,
+    };
+    return new Response(JSON.stringify(response));
   }
 }
 

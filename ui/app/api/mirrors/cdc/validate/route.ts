@@ -12,19 +12,13 @@ export async function POST(request: NextRequest) {
   const req: CreateCDCFlowRequest = {
     connectionConfigs: config,
   };
-  try {
-    const validateResponse: ValidateCDCMirrorResponse = await fetch(
-      `${flowServiceAddr}/v1/mirrors/cdc/validate`,
-      {
-        method: 'POST',
-        body: JSON.stringify(req),
-      }
-    ).then((res) => {
-      return res.json();
-    });
+  const validateResponse: ValidateCDCMirrorResponse = await fetch(
+    `${flowServiceAddr}/v1/mirrors/cdc/validate`,
+    {
+      method: 'POST',
+      body: JSON.stringify(req),
+    }
+  ).then((res) => res.json());
 
-    return new Response(JSON.stringify(validateResponse));
-  } catch (e) {
-    console.log(e);
-  }
+  return new Response(JSON.stringify(validateResponse));
 }

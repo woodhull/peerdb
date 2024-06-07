@@ -7,16 +7,10 @@ import { GetFlowHttpAddressFromEnv } from '@/rpc/http';
 export async function POST(request: Request) {
   const body: MirrorStatusRequest = await request.json();
   const flowServiceAddr = GetFlowHttpAddressFromEnv();
-  try {
-    const res: MirrorStatusResponse = await fetch(
-      `${flowServiceAddr}/v1/mirrors/${body.flowJobName}`,
-      { cache: 'no-store' }
-    ).then((res) => {
-      return res.json();
-    });
+  const res: MirrorStatusResponse = await fetch(
+    `${flowServiceAddr}/v1/mirrors/${body.flowJobName}`,
+    { cache: 'no-store' }
+  ).then((res) => res.json());
 
-    return new Response(JSON.stringify(res));
-  } catch (e) {
-    console.error(e);
-  }
+  return new Response(JSON.stringify(res));
 }
