@@ -22,17 +22,16 @@ use peerdb_parser::{NexusParsedStatement, NexusQueryParser, NexusStatement};
 use pgwire::{
     api::{
         auth::{
-            scram::{gen_salted_password, SASLScramAuthStartupHandler},
+            scram::{gen_salted_password, MakeSASLScramAuthStartupHandler},
             AuthSource, LoginInfo, Password, ServerParameterProvider,
         },
-        copy::NoopCopyHandler,
         portal::Portal,
         query::{ExtendedQueryHandler, SimpleQueryHandler},
         results::{
             DescribePortalResponse, DescribeResponse, DescribeStatementResponse, Response, Tag,
         },
         stmt::StoredStatement,
-        ClientInfo, PgWireHandlerFactory, Type,
+        ClientInfo, MakeHandler, Type,
     },
     error::{ErrorInfo, PgWireError, PgWireResult},
     tokio::process_socket,
@@ -50,7 +49,7 @@ use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 mod cursor;
 
-pub struct FixedPasswordAuthSource {
+struct FixedPasswordAuthSource {
     password: String,
 }
 
@@ -1013,36 +1012,6 @@ async fn run_migrations<'a>(config: &CatalogConfig<'a>) -> anyhow::Result<()> {
     Err(anyhow::anyhow!("Failed to connect to catalog"))
 }
 
-pub struct Handlers {
-    authenticator:
-        Arc<SASLScramAuthStartupHandler<FixedPasswordAuthSource, NexusServerParameterProvider>>,
-    nexus: Arc<NexusBackend>,
-}
-
-impl PgWireHandlerFactory for Handlers {
-    type StartupHandler =
-        SASLScramAuthStartupHandler<FixedPasswordAuthSource, NexusServerParameterProvider>;
-    type SimpleQueryHandler = NexusBackend;
-    type ExtendedQueryHandler = NexusBackend;
-    type CopyHandler = NoopCopyHandler;
-
-    fn simple_query_handler(&self) -> Arc<Self::SimpleQueryHandler> {
-        self.nexus.clone()
-    }
-
-    fn extended_query_handler(&self) -> Arc<Self::ExtendedQueryHandler> {
-        self.nexus.clone()
-    }
-
-    fn startup_handler(&self) -> Arc<Self::StartupHandler> {
-        self.authenticator.clone()
-    }
-
-    fn copy_handler(&self) -> Arc<Self::CopyHandler> {
-        Arc::new(NoopCopyHandler)
-    }
-}
-
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
@@ -1050,10 +1019,10 @@ pub async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let _guard = setup_tracing(args.log_dir.as_ref().map(|s| &s[..]));
 
-    let authenticator = Arc::new(SASLScramAuthStartupHandler::new(
+    let authenticator = MakeSASLScramAuthStartupHandler::new(
         Arc::new(FixedPasswordAuthSource::new(args.peerdb_password.clone())),
         Arc::new(NexusServerParameterProvider),
-    ));
+    );
     let catalog_config = get_catalog_config(&args);
 
     run_migrations(&catalog_config).await?;
@@ -1086,7 +1055,7 @@ pub async fn main() -> anyhow::Result<()> {
         let conn_flow_handler = flow_handler.clone();
         let conn_peer_conns = peer_conns.clone();
         let peerdb_fdw_mode = args.peerdb_fwd_mode == "true";
-        let authenticator = authenticator.clone();
+        let authenticator_ref = authenticator.make();
         let pg_config = catalog_config.to_postgres_config();
 
         tokio::task::spawn(async move {
@@ -1095,7 +1064,7 @@ pub async fn main() -> anyhow::Result<()> {
                     let conn_uuid = uuid::Uuid::new_v4();
                     let tracker = PeerConnectionTracker::new(conn_uuid, conn_peer_conns);
 
-                    let nexus = Arc::new(NexusBackend::new(
+                    let processor = Arc::new(NexusBackend::new(
                         Arc::new(catalog),
                         tracker,
                         conn_flow_handler,
@@ -1104,10 +1073,9 @@ pub async fn main() -> anyhow::Result<()> {
                     process_socket(
                         socket,
                         None,
-                        Arc::new(Handlers {
-                            nexus,
-                            authenticator,
-                        }),
+                        authenticator_ref,
+                        processor.clone(),
+                        processor,
                     )
                     .await
                 }
