@@ -1269,16 +1269,6 @@ func (c *PostgresConnector) RenameTables(ctx context.Context, req *protos.Rename
 		}
 		dst := dstTable.String()
 
-		c.logger.Info(fmt.Sprintf("setting synced at column for table '%s'...", src))
-
-		if req.SyncedAtColName != nil && *req.SyncedAtColName != "" {
-			_, err = renameTablesTx.Exec(ctx,
-				fmt.Sprintf("UPDATE %s SET %s=now()", src, QuoteIdentifier(*req.SyncedAtColName)))
-			if err != nil {
-				return nil, fmt.Errorf("unable to set synced at column for table %s: %w", src, err)
-			}
-		}
-
 		if req.SoftDeleteColName != nil && *req.SoftDeleteColName != "" {
 			columnNames := make([]string, 0, len(renameRequest.TableSchema.Columns))
 			for _, col := range renameRequest.TableSchema.Columns {
