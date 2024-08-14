@@ -59,8 +59,7 @@ func (c *ClickhouseConnector) createMetadataInsertStatement(
 	partitionJSON := string(pbytes)
 
 	insertMetadataStmt := fmt.Sprintf(
-		`INSERT INTO %s
-			(flowJobName, partitionID, syncPartition, syncStartTime, syncFinishTime)
+		`INSERT INTO %s (flowJobName, partitionID, syncPartition, syncStartTime, syncFinishTime)
 			VALUES ('%s', '%s', '%s', '%s', NOW());`,
 		qRepMetadataTableName, jobName, partition.PartitionId,
 		partitionJSON, startTime.Format("2006-01-02 15:04:05.000000"))
@@ -116,8 +115,8 @@ func (c *ClickhouseConnector) createQRepMetadataTable(ctx context.Context) error
 		syncPartition String,
 		syncStartTime DateTime64,
 		syncFinishTime DateTime64
-		) ENGINE = MergeTree()
-		ORDER BY partitionID;
+	) ENGINE = MergeTree()
+	ORDER BY partitionID;
 	`
 	queryString := fmt.Sprintf(schemaStatement, qRepMetadataTableName)
 	err := c.execWithLogging(ctx, queryString)
