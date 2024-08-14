@@ -59,7 +59,7 @@ func ValidateClickhouseHost(ctx context.Context, chHost string, allowedDomainStr
 			return nil
 		}
 	}
-	return fmt.Errorf("invalid Clickhouse host domain: %s. Allowed domains: %s",
+	return fmt.Errorf("invalid ClickHouse host domain: %s. Allowed domains: %s",
 		chHost, strings.Join(allowedDomains, ","))
 }
 

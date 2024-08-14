@@ -251,6 +251,20 @@ type QRepConsolidateConnector interface {
 	CleanupQRepFlow(ctx context.Context, config *protos.QRepConfig) error
 }
 
+type AvroExportS3Connector interface {
+	Connector
+
+	// Export list of tables to S3, returns paths
+	AvroExport(context.Context, []string) ([]string, error)
+}
+
+type AvroImportS3Connector interface {
+	Connector
+
+	// Import list of paths
+	AvroImport(context.Context, []string) error
+}
+
 type RenameTablesConnector interface {
 	Connector
 

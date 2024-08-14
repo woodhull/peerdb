@@ -902,6 +902,33 @@ func (c *BigQueryConnector) CreateTablesFromExisting(
 	}, nil
 }
 
+func (c *BigQueryConnector) AvroExportS3(ctx context.Context, tables []string, uris []string) error {
+	var jobs []*bigquery.Job
+	for idx, table := range tables {
+		gcsRef := bigquery.NewGCSReference(uris[idx])
+		gcsRef.DestinationFormat = bigquery.Avro
+		gcsRef.Compression = bigquery.Snappy
+
+		extractor := c.client.DatasetInProject(c.projectID, c.datasetID).Table(table).ExtractorTo(gcsRef)
+		job, err := extractor.Run(ctx)
+		if err != nil {
+			return err
+		}
+		jobs = append(jobs, job)
+	}
+	for _, job := range jobs {
+		// TODO use Read to get output paths?
+		status, err := job.Wait(ctx)
+		if err != nil {
+			return err
+		}
+		if err := status.Err(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type datasetTable struct {
 	project string
 	dataset string
