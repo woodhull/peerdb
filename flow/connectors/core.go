@@ -254,15 +254,15 @@ type QRepConsolidateConnector interface {
 type AvroExportS3Connector interface {
 	Connector
 
-	// Export list of tables to S3, returns paths
-	AvroExport(context.Context, []string) ([]string, error)
+	// Export list of tables to S3
+	AvroExport(context.Context, *protos.FlowConnectionConfigs) error
 }
 
 type AvroImportS3Connector interface {
 	Connector
 
 	// Import list of paths
-	AvroImport(context.Context, []string) error
+	AvroImport(context.Context, *protos.FlowConnectionConfigs) error
 }
 
 type RenameTablesConnector interface {
@@ -437,6 +437,10 @@ func CloseConnector(ctx context.Context, conn Connector) {
 
 // create type assertions to cause compile time error if connector interface not implemented
 var (
+	_ AvroExportS3Connector = &connbigquery.BigQueryConnector{}
+
+	_ AvroImportS3Connector = &connclickhouse.ClickhouseConnector{}
+
 	_ CDCPullConnector = &connpostgres.PostgresConnector{}
 
 	_ CDCPullPgConnector = &connpostgres.PostgresConnector{}

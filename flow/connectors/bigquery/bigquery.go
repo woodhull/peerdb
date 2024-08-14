@@ -902,14 +902,16 @@ func (c *BigQueryConnector) CreateTablesFromExisting(
 	}, nil
 }
 
-func (c *BigQueryConnector) AvroExportS3(ctx context.Context, tables []string, uris []string) error {
-	var jobs []*bigquery.Job
-	for idx, table := range tables {
-		gcsRef := bigquery.NewGCSReference(uris[idx])
+func (c *BigQueryConnector) AvroExport(ctx context.Context, config *protos.FlowConnectionConfigs) error {
+	jobs := make([]*bigquery.Job, 0, len(config.TableMappings))
+	for _, mapping := range config.TableMappings {
+		uri := fmt.Sprintf("%s/%s/*.avro", config.CdcStagingPath, mapping.SourceTableIdentifier)
+		gcsRef := bigquery.NewGCSReference(uri)
 		gcsRef.DestinationFormat = bigquery.Avro
 		gcsRef.Compression = bigquery.Snappy
 
-		extractor := c.client.DatasetInProject(c.projectID, c.datasetID).Table(table).ExtractorTo(gcsRef)
+		// TODO s3 creds
+		extractor := c.client.DatasetInProject(c.projectID, c.datasetID).Table(mapping.SourceTableIdentifier).ExtractorTo(gcsRef)
 		job, err := extractor.Run(ctx)
 		if err != nil {
 			return err
