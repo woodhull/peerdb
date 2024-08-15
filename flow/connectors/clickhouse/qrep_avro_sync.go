@@ -52,12 +52,13 @@ func (s *ClickhouseAvroSyncMethod) CopyStageToDestination(ctx context.Context, a
 		sessionTokenPart = fmt.Sprintf(", '%s'", creds.AWS.SessionToken)
 	}
 
-	numParts := 7
+	numParts := 37
 	for i := 0; i < numParts; i++ {
 		whereClause := fmt.Sprintf("cityHash64(_peerdb_uid) %% %d = %d", numParts, i)
 		query := fmt.Sprintf("INSERT INTO %s SELECT * FROM s3('%s','%s','%s'%s, 'Avro') WHERE %s",
 			s.config.DestinationTableIdentifier, avroFileUrl,
 			creds.AWS.AccessKeyID, creds.AWS.SecretAccessKey, sessionTokenPart, whereClause)
+		s.connector.logger.Info("executing query", slog.String("query", query), slog.Int("part", i), slog.Int("numParts", numParts))
 		err := s.connector.database.Exec(ctx, query)
 		if err != nil {
 			return fmt.Errorf("failed to execute query - %s: %w", query, err)
