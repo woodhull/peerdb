@@ -55,7 +55,7 @@ func (s *ClickhouseAvroSyncMethod) CopyStageToDestination(ctx context.Context, a
 	query := fmt.Sprintf("INSERT INTO %s SELECT * FROM s3('%s','%s','%s'%s, 'Avro')",
 		s.config.DestinationTableIdentifier, avroFileUrl,
 		creds.AWS.AccessKeyID, creds.AWS.SecretAccessKey, sessionTokenPart)
-	s.connector.logger.Info("executing query", slog.String("query", query), slog.Int("part", i), slog.Int("numParts", numParts))
+	s.connector.logger.Info("running query", slog.String("query", query))
 	err = s.connector.database.Exec(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed to execute query - %s: %w", query, err)
