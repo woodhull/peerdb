@@ -52,17 +52,13 @@ func (s *ClickhouseAvroSyncMethod) CopyStageToDestination(ctx context.Context, a
 		sessionTokenPart = fmt.Sprintf(", '%s'", creds.AWS.SessionToken)
 	}
 
-	numParts := 37
-	for i := 0; i < numParts; i++ {
-		whereClause := fmt.Sprintf("cityHash64(_peerdb_uid) %% %d = %d", numParts, i)
-		query := fmt.Sprintf("INSERT INTO %s SELECT * FROM s3('%s','%s','%s'%s, 'Avro') WHERE %s",
-			s.config.DestinationTableIdentifier, avroFileUrl,
-			creds.AWS.AccessKeyID, creds.AWS.SecretAccessKey, sessionTokenPart, whereClause)
-		s.connector.logger.Info("executing query", slog.String("query", query), slog.Int("part", i), slog.Int("numParts", numParts))
-		err := s.connector.database.Exec(ctx, query)
-		if err != nil {
-			return fmt.Errorf("failed to execute query - %s: %w", query, err)
-		}
+	query := fmt.Sprintf("INSERT INTO %s SELECT * FROM s3('%s','%s','%s'%s, 'Avro')",
+		s.config.DestinationTableIdentifier, avroFileUrl,
+		creds.AWS.AccessKeyID, creds.AWS.SecretAccessKey, sessionTokenPart)
+	s.connector.logger.Info("executing query", slog.String("query", query), slog.Int("part", i), slog.Int("numParts", numParts))
+	err = s.connector.database.Exec(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to execute query - %s: %w", query, err)
 	}
 
 	return nil
@@ -157,14 +153,19 @@ func (s *ClickhouseAvroSyncMethod) SyncQRepRecords(
 	if creds.AWS.SessionToken != "" {
 		sessionTokenPart = fmt.Sprintf(", '%s'", creds.AWS.SessionToken)
 	}
-	query := fmt.Sprintf("INSERT INTO %s(%s) SELECT %s FROM s3('%s','%s','%s'%s, 'Avro')",
-		config.DestinationTableIdentifier, selectorStr, selectorStr, avroFileUrl,
-		creds.AWS.AccessKeyID, creds.AWS.SecretAccessKey, sessionTokenPart)
 
-	err = s.connector.database.Exec(ctx, query)
-	if err != nil {
-		s.connector.logger.Error("Failed to insert into select for Clickhouse: ", err)
-		return 0, err
+	numParts := 37
+	for i := 0; i < numParts; i++ {
+		whereClause := fmt.Sprintf("cityHash64(_peerdb_uid) %% %d = %d", numParts, i)
+		query := fmt.Sprintf("INSERT INTO %s(%s) SELECT %s FROM s3('%s','%s','%s'%s, 'Avro') WHERE %s",
+			config.DestinationTableIdentifier, selectorStr, selectorStr, avroFileUrl,
+			creds.AWS.AccessKeyID, creds.AWS.SecretAccessKey, sessionTokenPart, whereClause)
+		s.connector.logger.Info("running query", slog.String("query", query), slog.Int("part", i), slog.Int("numParts", numParts))
+		err := s.connector.database.Exec(ctx, query)
+		if err != nil {
+			s.connector.logger.Error("failed to execute query", slog.String("query", query), slog.Int("part", i), slog.Int("numParts", numParts), slog.Any("error", err))
+			return 0, err
+		}
 	}
 
 	err = s.insertMetadata(ctx, partition, config.FlowJobName, startTime)
