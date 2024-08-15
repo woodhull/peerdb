@@ -154,9 +154,11 @@ func (s *ClickhouseAvroSyncMethod) SyncQRepRecords(
 		sessionTokenPart = fmt.Sprintf(", '%s'", creds.AWS.SessionToken)
 	}
 
+	hashColName := dstTableSchema[0].Name()
+
 	numParts := 37
 	for i := 0; i < numParts; i++ {
-		whereClause := fmt.Sprintf("cityHash64(_peerdb_uid) %% %d = %d", numParts, i)
+		whereClause := fmt.Sprintf("cityHash64(%s) %% %d = %d", hashColName, numParts, i)
 		query := fmt.Sprintf("INSERT INTO %s(%s) SELECT %s FROM s3('%s','%s','%s'%s, 'Avro') WHERE %s",
 			config.DestinationTableIdentifier, selectorStr, selectorStr, avroFileUrl,
 			creds.AWS.AccessKeyID, creds.AWS.SecretAccessKey, sessionTokenPart, whereClause)
