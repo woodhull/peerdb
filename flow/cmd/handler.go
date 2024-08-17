@@ -19,6 +19,7 @@ import (
 	"github.com/PeerDB-io/peer-flow/connectors/utils"
 	"github.com/PeerDB-io/peer-flow/generated/protos"
 	"github.com/PeerDB-io/peer-flow/model"
+	"github.com/PeerDB-io/peer-flow/peerdbenv"
 	"github.com/PeerDB-io/peer-flow/shared"
 	peerflow "github.com/PeerDB-io/peer-flow/workflows"
 )
@@ -243,7 +244,7 @@ func (h *FlowRequestHandler) CreateImportS3(
 	workflowID := fmt.Sprintf("%s-import-%s", req.Config.FlowJobName, uuid.New())
 	workflowOptions := client.StartWorkflowOptions{
 		ID:        workflowID,
-		TaskQueue: h.peerflowTaskQueueID,
+		TaskQueue: peerdbenv.PeerFlowTaskQueueName(shared.SnapshotFlowTaskQueue),
 		SearchAttributes: map[string]interface{}{
 			shared.MirrorNameSearchAttribute: req.Config.FlowJobName,
 		},
