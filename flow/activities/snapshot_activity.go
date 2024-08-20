@@ -179,7 +179,7 @@ func (a *SnapshotActivity) WaitForExportSnapshot(ctx context.Context, sessionID 
 	}
 }
 
-func (a *SnapshotActivity) S3Export(ctx context.Context, config *protos.FlowConnectionConfigs) error {
+func (a *SnapshotActivity) S3Export(ctx context.Context, config *protos.CreateImportS3Request) error {
 	src, err := connectors.GetByNameAs[connectors.AvroExportS3Connector](ctx, a.CatalogPool, config.SourceName)
 	if err != nil {
 		return err
@@ -188,6 +188,11 @@ func (a *SnapshotActivity) S3Export(ctx context.Context, config *protos.FlowConn
 	if err != nil {
 		return err
 	}
+
+	// Some changes that could happen here:
+	// - Make URIs a channel so import can start before all tables exported
+	// - Split up activity so exports aren't retried
+	//   (issues: doesn't work with channel easily, signed uri may timeout, puts signed uri into temporal state)
 
 	dst, err := connectors.GetByNameAs[connectors.AvroImportS3Connector](ctx, a.CatalogPool, config.DestinationName)
 	if err != nil {

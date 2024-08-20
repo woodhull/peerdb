@@ -141,12 +141,26 @@ func (c *ClickhouseConnector) CleanupQRepFlow(ctx context.Context, config *proto
 	return c.dropStage(ctx, config.StagingPath, config.FlowJobName)
 }
 
-func (c *ClickhouseConnector) AvroImport(ctx context.Context, config *protos.FlowConnectionConfigs, urls map[string][]string) error {
+func (c *ClickhouseConnector) AvroImport(ctx context.Context, config *protos.CreateImportS3Request, urls map[string][]string) error {
+	var engine string
+	// TODO maybe this should be per table mapping
+	if config.ReplacingMergeTree {
+		engine = "ReplacingMergeTree"
+	} else {
+		engine = "MergeTree"
+	}
+
 	for _, mapping := range config.TableMappings {
+		engineOrderBy := engine
+		if mapping.PartitionKey != "" {
+			// TODO escape OrderBy
+			engineOrderBy += fmt.Sprintf(" ORDER BY (%s)", mapping.PartitionKey)
+		}
 		for _, uri := range urls[mapping.SourceTableIdentifier] {
-			if err := c.SyncFromAvroUrl(ctx, aws.Credentials{}, uri, mapping.DestinationTableIdentifier); err != nil {
+			if err := c.SyncFromAvroUrl(ctx, uri, mapping.DestinationTableIdentifier, engineOrderBy); err != nil {
 				return err
 			}
+			engineOrderBy = ""
 		}
 	}
 	return nil
@@ -154,20 +168,28 @@ func (c *ClickhouseConnector) AvroImport(ctx context.Context, config *protos.Flo
 
 func (c *ClickhouseConnector) SyncFromAvroUrl(
 	ctx context.Context,
-	creds aws.Credentials,
 	avroFileUrl string,
 	destinationTableIdentifier string,
+	engine string,
 ) error {
-	// CH supports `(* except (b))` which can be used in future to support column exclusion
-	query := fmt.Sprintf("INSERT INTO %s (*) SELECT * FROM url('%s','Avro')",
-		destinationTableIdentifier, avroFileUrl)
+	var query string
+	if engine == "" {
+		query = fmt.Sprintf("INSERT INTO TABLE %s (*) SELECT * FROM url(?,'Avro')", destinationTableIdentifier)
+	} else {
+		// https://github.com/ClickHouse/ClickHouse/issues/35408
+		query = fmt.Sprintf("CREATE TABLE %s ENGINE = %s SETTINGS allow_nullable_key = true EMPTY AS SELECT * FROM url(?,'Avro')", destinationTableIdentifier, engine)
+	}
 
-	err := c.database.Exec(ctx, query)
+	err := c.database.Exec(ctx, query, avroFileUrl)
 	if err != nil {
-		c.logger.Error("Failed to insert into select for Clickhouse: ", err)
+		c.logger.Error("Failed to insert into select for Clickhouse", slog.Any("error", err))
 		return err
 	}
 
+	if engine != "" {
+		// Need to actually populate data now
+		return c.SyncFromAvroUrl(ctx, avroFileUrl, destinationTableIdentifier, "")
+	}
 	return nil
 }
 
