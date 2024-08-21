@@ -13,6 +13,7 @@ type DataConfigProps = {
 
 const PeerData = async ({ params: { peerName } }: DataConfigProps) => {
   const getSlotData = async () => {
+    try{
     const flowServiceAddr = GetFlowHttpAddressFromEnv();
 
     const peerSlots: PeerSlotResponse = await fetch(
@@ -40,9 +41,14 @@ const PeerData = async ({ params: { peerName } }: DataConfigProps) => {
       }
     });
     return slotArray;
+  } catch (e) {
+    console.error('Error fetching slots:', e);
+    return [];
+  }
   };
 
   const getStatData = async () => {
+    try{
     const flowServiceAddr = GetFlowHttpAddressFromEnv();
 
     const peerStats: PeerStatResponse = await fetch(
@@ -51,7 +57,11 @@ const PeerData = async ({ params: { peerName } }: DataConfigProps) => {
     ).then((res) => res.json());
 
     return peerStats.statData;
-  };
+    } catch (e) {
+      console.error('Error fetching stats:', e);
+      return [];
+    };
+  }
 
   const slots = await getSlotData();
   const stats = await getStatData();
