@@ -21,9 +21,13 @@ const PeerData = async ({ params: { peerName } }: DataConfigProps) => {
       {
         cache: 'no-store',
       }
-    ).then((res) => res.json());
+    ).then((res) => res.json())
+    .catch((e) => {
+      console.error('Error fetching slots:', e);
+      return [];
+    });
 
-    const slotArray = peerSlots.slotData;
+    const slotArray = peerSlots.slotData??[];
     // slots with 'peerflow_slot' should come first
     slotArray?.sort((slotA, slotB) => {
       if (
@@ -54,9 +58,13 @@ const PeerData = async ({ params: { peerName } }: DataConfigProps) => {
     const peerStats: PeerStatResponse = await fetch(
       `${flowServiceAddr}/v1/peers/stats/${peerName}`,
       { cache: 'no-store' }
-    ).then((res) => res.json());
+    ).then((res) => res.json())
+    .catch((e) => {
+      console.error('Error fetching stats:', e);
+      return [];
+    });
 
-    return peerStats.statData;
+    return peerStats.statData ?? [];
     } catch (e) {
       console.error('Error fetching stats:', e);
       return [];
