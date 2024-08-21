@@ -31,6 +31,7 @@ type ClickhouseConnector struct {
 	config             *protos.ClickhouseConfig
 	credsProvider      *utils.ClickHouseS3Credentials
 	s3Stage            *ClickHouseS3Stage
+	databaseName       string
 }
 
 func ValidateS3(ctx context.Context, creds *utils.ClickHouseS3Credentials) error {
@@ -201,6 +202,7 @@ func NewClickhouseConnector(
 		logger:             logger,
 		credsProvider:      &clickHouseS3CredentialsNew,
 		s3Stage:            NewClickHouseS3Stage(),
+		databaseName:       config.Database,
 	}, nil
 }
 
