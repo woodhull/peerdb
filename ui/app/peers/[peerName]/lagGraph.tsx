@@ -12,8 +12,10 @@ import { LineChart } from '@tremor/react';
 import { useCallback, useEffect, useState } from 'react';
 import ReactSelect from 'react-select';
 import { useLocalStorage } from 'usehooks-ts';
+import { getSlotData } from './helpers';
 
-function LagGraph({ slotNames }: { slotNames: string[] }) {
+function LagGraph({ peerName }: { peerName: string }) {
+  const [slotNames, setSlotNames] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
   const [lagPoints, setLagPoints] = useState<
     { time: string; 'Lag in GB': number }[]
@@ -24,6 +26,12 @@ function LagGraph({ slotNames }: { slotNames: string[] }) {
   let [timeSince, setTimeSince] = useState<TimeAggregateTypes>(
     TimeAggregateTypes.HOUR
   );
+
+  const fetchSlotNames = useCallback(async () => {
+    const slots = await getSlotData(peerName);
+    setSlotNames(slots.map((slot) => slot.slotName));
+  }, [peerName]);
+
   const fetchLagPoints = useCallback(async () => {
     if (selectedSlot == '') {
       return;
@@ -55,8 +63,9 @@ function LagGraph({ slotNames }: { slotNames: string[] }) {
 
   useEffect(() => {
     setMounted(true);
+    fetchSlotNames();
     fetchLagPoints();
-  }, [fetchLagPoints]);
+  }, [fetchLagPoints, fetchSlotNames]);
 
   if (!mounted) {
     return (
