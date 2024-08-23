@@ -338,7 +338,7 @@ const getDefaultDestinationTable = (
     if (schemaName.length === 0) {
       return tableName;
     }
-    return `${schemaName}_${tableName}`;
+    return tableName;
   }
 
   if (
