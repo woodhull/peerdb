@@ -17,9 +17,9 @@ import (
 
 const (
 	isDeletedColName = "_peerdb_is_deleted"
-	isDeletedColType = "Int8"
+	isDeletedColType = "UInt8"
 	versionColName   = "_peerdb_version"
-	versionColType   = "Int64"
+	versionColType   = "UInt64"
 )
 
 func (c *ClickhouseConnector) StartSetupNormalizedTables(_ context.Context) (interface{}, error) {
@@ -106,9 +106,9 @@ func generateCreateTableSQLForNormalizedTable(
 
 	// add sign and version columns
 	stmtBuilder.WriteString(fmt.Sprintf(
-		"`%s` %s, `%s` %s) ENGINE = ReplacingMergeTree(`%s`, `%s`, `%s`)",
+		"`%s` %s, `%s` %s) ENGINE = ReplacingMergeTree(`%s`, `%s`)",
 		isDeletedColName, isDeletedColType, versionColName, versionColType, versionColName,
-		versionColName, isDeletedColName))
+		isDeletedColName))
 
 	pkeys := tableSchema.PrimaryKeyColumns
 	if len(pkeys) > 0 {
