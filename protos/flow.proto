@@ -294,6 +294,7 @@ message QRepConfig {
   string snapshot_name = 23;
 
   map<string, string> env = 24;
+  string watermark_query = 25;
 }
 
 message QRepPartition {
