@@ -251,6 +251,12 @@ type QRepConsolidateConnector interface {
 	CleanupQRepFlow(ctx context.Context, config *protos.QRepConfig) error
 }
 
+type RawTableConnector interface {
+	Connector
+
+	RemoveTableEntriesFromRawTable(context.Context, *protos.RemoveTablesFromRawTableInput) error
+}
+
 type RenameTablesConnector interface {
 	Connector
 
@@ -477,6 +483,11 @@ var (
 	_ RenameTablesConnector = &connbigquery.BigQueryConnector{}
 	_ RenameTablesConnector = &connpostgres.PostgresConnector{}
 	_ RenameTablesConnector = &connclickhouse.ClickhouseConnector{}
+
+	_ RawTableConnector = &connclickhouse.ClickhouseConnector{}
+	_ RawTableConnector = &connbigquery.BigQueryConnector{}
+	_ RawTableConnector = &connsnowflake.SnowflakeConnector{}
+	_ RawTableConnector = &connpostgres.PostgresConnector{}
 
 	_ ValidationConnector = &connsnowflake.SnowflakeConnector{}
 	_ ValidationConnector = &connclickhouse.ClickhouseConnector{}
