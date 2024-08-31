@@ -52,6 +52,9 @@ func (m *mergeStmtGenerator) generateFlattenedCTE(dstTable string, normalizedTab
 		case qvalue.QValueKindGeography, qvalue.QValueKindGeometry, qvalue.QValueKindPoint:
 			castStmt = fmt.Sprintf("CAST(ST_GEOGFROMTEXT(JSON_VALUE(_peerdb_data, '$.%s')) AS %s) AS `%s`",
 				column.Name, bqTypeString, shortCol)
+		case qvalue.QValueKindTimestamp, qvalue.QValueKindTimestampTZ, qvalue.QValueKindDate:
+			castStmt = fmt.Sprintf("IFNULL(SAFE_CAST(JSON_VALUE(_peerdb_data, '$.%s') AS %s),NULL) AS `%s`",
+				column.Name, bqTypeString, shortCol)
 		// MAKE_INTERVAL(years INT64, months INT64, days INT64, hours INT64, minutes INT64, seconds INT64)
 		// Expecting interval to be in the format of {"Microseconds":2000000,"Days":0,"Months":0,"Valid":true}
 		// json.Marshal in SyncRecords for Postgres already does this - once new data-stores are added,
