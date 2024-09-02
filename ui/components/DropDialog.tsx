@@ -40,7 +40,7 @@ export const handleDropMirror = async (
   setLoading(false);
   if (res.status !== 200) {
     setMsg(
-      `Unable to drop mirror ${dropArgs.flowJobName}. ${res.json() ?? ''}`
+      `Unable to drop mirror ${dropArgs.flowJobName}`
     );
     return false;
   }
