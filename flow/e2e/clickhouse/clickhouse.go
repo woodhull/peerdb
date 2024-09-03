@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/PeerDB-io/peer-flow/connectors"
-	"github.com/PeerDB-io/peer-flow/connectors/clickhouse"
+	connclickhouse "github.com/PeerDB-io/peer-flow/connectors/clickhouse"
 	connpostgres "github.com/PeerDB-io/peer-flow/connectors/postgres"
 	"github.com/PeerDB-io/peer-flow/e2e"
-	"github.com/PeerDB-io/peer-flow/e2e/s3"
+	e2e_s3 "github.com/PeerDB-io/peer-flow/e2e/s3"
 	"github.com/PeerDB-io/peer-flow/generated/protos"
 	"github.com/PeerDB-io/peer-flow/model"
 	"github.com/PeerDB-io/peer-flow/model/qvalue"
@@ -91,7 +91,7 @@ func (s ClickHouseSuite) GetRows(table string, cols string) (*model.QRecordBatch
 
 	rows, err := ch.Query(
 		context.Background(),
-		fmt.Sprintf(`SELECT %s FROM e2e_test_%s.%s ORDER BY id`, cols, s.suffix, table),
+		fmt.Sprintf(`SELECT %s FROM %s ORDER BY %s`, cols, table, strings.Split(cols, ",")[0]),
 	)
 	if err != nil {
 		return nil, err
