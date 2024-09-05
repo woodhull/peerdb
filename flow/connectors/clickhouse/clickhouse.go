@@ -299,7 +299,8 @@ func (c *ClickhouseConnector) checkTablesEmptyAndEngine(ctx context.Context, tab
 			return fmt.Errorf("table %s exists and is not empty", tableName)
 		}
 		if !slices.Contains(acceptableTableEngines, engine) {
-			return fmt.Errorf("table %s exists and is not using ReplacingMergeTree/MergeTree engine", tableName)
+			return fmt.Errorf("table %s exists but is not using ReplacingMergeTree/MergeTree engine,"+
+				" and is using %s instead", tableName, engine)
 		}
 	}
 	if rows.Err() != nil {
@@ -384,14 +385,19 @@ func (c *ClickhouseConnector) CheckDestinationTables(ctx context.Context, req *p
 ) error {
 	peerDBColumns := []string{signColName, versionColName}
 	if req.SyncedAtColName != "" {
-		peerDBColumns = append(peerDBColumns, req.SyncedAtColName)
+		peerDBColumns = append(peerDBColumns, strings.ToLower(req.SyncedAtColName))
 	}
 	// this is for handling column exclusion, processed schema does that in a step
 	processedMapping := shared.BuildProcessedSchemaMapping(req.TableMappings, tableNameSchemaMapping, c.logger)
 	dstTableNames := slices.Collect(maps.Keys(processedMapping))
-	err := c.checkTablesEmptyAndEngine(ctx, dstTableNames)
-	if err != nil {
-		return err
+
+	// In the case of resync, we don't need to check the content or structure of the original tables;
+	// they'll anyways get swapped out with the _resync tables which we CREATE OR REPLACE
+	if !req.Resync {
+		err := c.checkTablesEmptyAndEngine(ctx, dstTableNames)
+		if err != nil {
+			return err
+		}
 	}
 	// optimization: fetching columns for all tables at once
 	chTableColumnsMapping, err := c.getTableColumnsMapping(ctx, dstTableNames)

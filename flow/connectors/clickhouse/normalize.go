@@ -24,7 +24,7 @@ const (
 	versionColType = "Int64"
 )
 
-var acceptableTableEngines = []string{"ReplacingMergeTree", "MergeTree"}
+var acceptableTableEngines = []string{"ReplacingMergeTree", "MergeTree", "SharedReplacingMergeTree"}
 
 func (c *ClickhouseConnector) StartSetupNormalizedTables(_ context.Context) (interface{}, error) {
 	return nil, nil
@@ -47,7 +47,8 @@ func (c *ClickhouseConnector) SetupNormalizedTable(
 	if err != nil {
 		return false, fmt.Errorf("error occurred while checking if normalized table exists: %w", err)
 	}
-	if tableAlreadyExists {
+	if tableAlreadyExists && !config.IsResync {
+		c.logger.Info("[ch] normalized table already exists, skipping", "table", tableIdentifier)
 		return true, nil
 	}
 
