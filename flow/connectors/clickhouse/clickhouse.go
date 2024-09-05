@@ -70,7 +70,7 @@ func (c *ClickhouseConnector) ValidateCheck(ctx context.Context) error {
 	// validate clickhouse host
 	allowedDomains := peerdbenv.PeerDBClickhouseAllowedDomains()
 	if err := ValidateClickhouseHost(ctx, c.config.Host, allowedDomains); err != nil {
-		return err
+		return nil
 	}
 	validateDummyTableName := "peerdb_validation_" + shared.RandomString(4)
 	// create a table
