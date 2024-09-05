@@ -211,7 +211,7 @@ func Connect(ctx context.Context, config *protos.ClickhouseConfig) (clickhouse.C
 	logger.Warn("Connecting to Clickhouse peer", slog.Any("config", config))
 	var tlsSetting *tls.Config
 	if !config.DisableTls {
-		tlsSetting = &tls.Config{MinVersion: tls.VersionTLS13}
+		tlsSetting = &tls.Config{MinVersion: tls.VersionTLS13, InsecureSkipVerify: true}
 	}
 	if config.Certificate != nil || config.PrivateKey != nil {
 		if config.Certificate == nil || config.PrivateKey == nil {
