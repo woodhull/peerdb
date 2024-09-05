@@ -207,6 +207,8 @@ func NewClickhouseConnector(
 }
 
 func Connect(ctx context.Context, config *protos.ClickhouseConfig) (clickhouse.Conn, error) {
+	logger := logger.LoggerFromCtx(ctx)
+	logger.Warn("Connecting to Clickhouse peer", slog.Any("config", config))
 	var tlsSetting *tls.Config
 	if !config.DisableTls {
 		tlsSetting = &tls.Config{MinVersion: tls.VersionTLS13}
